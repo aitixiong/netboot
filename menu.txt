@@ -1,0 +1,50 @@
+#!ipxe
+   set menu-timeout 100000
+   set menu-default local
+   set boot-url http://nb.51ict.top/00boot
+   isset ${ip} || dhcp
+
+#######################################################################################################
+:start
+  menu iPXE Boot Menu --${platform} --${buildarch} --${ip}
+  item --gap --             ------------------------------- Tools & Setup ----------------------------
+                            ###################################标准长度###############################
+                                            item test                      Start test menu
+                                            item ubuntu18-minimal-server   Ubuntu18 Install(minimal)
+  item --gap --             ------------------------------ Advanced Options ---------------------------
+                                            item --key c config       Configure settings  -- c
+                                            item shell                Drop to iPXE shell
+                                            item reboot               Reboot computer
+                                            item --key h local        Boot from local drive  -- h
+                                            item --key x exit         Exit iPXE and continue BIOS boot  -- x
+                                            choose --timeout ${menu-timeout} --default ${menu-default} selected
+                                            goto ${selected}
+#######################################################################################################
+:local
+  sanboot --no-describe --drive 0x80
+
+:shell
+  echo Type 'exit' to get the back to the menu
+  shell
+  goto start
+ 
+:reboot
+  reboot
+ 
+:exit
+  exit
+
+:config
+  config
+  goto start
+  
+:retry
+  imgfree
+  prompt Error! press any key to retry
+  goto start
+#######################################################################################################
+:test  
+  chain ${boot-url}/test.txt || goto retry
+
+:ubuntu18-minimal-server
+  chain ${boot-url}/ubuntu18-minimal-server-online.txt || goto retry
